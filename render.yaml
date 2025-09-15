@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ers-image-classifier
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      chmod +x start.sh
+    startCommand: ./start.sh
+    plan: free
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_MODEL_BUCKET
+        sync: false
