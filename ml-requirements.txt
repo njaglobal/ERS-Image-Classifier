@@ -1,18 +1,4 @@
-# Image processing
-tensorflow
-Pillow
-opencv-python-headless
-exif
-numpy
-
-# Web framework
-fastapi
-uvicorn[standard]
-python-multipart
-python-dotenv
-
-# Supabase client
-supabase
-
-# Misc utilities
-requests
+# Core API 
+torch==2.8.0 
+transformers==4.56.1
+tensorflow==2.20.0
