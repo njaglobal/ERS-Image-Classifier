@@ -2,8 +2,22 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from supabase_utils import sync_model_files
 from predict import classify_and_describe
+from model_loader import get_model, reset_model
+from predict import classify_and_describe
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+
+
+# Lifespan context manager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
+    sync_model_files()
+    yield
+    # Shutdown code (optional)
+    # e.g., clean up resources
+
+app = FastAPI(title="ERS Image Classifier")
 
 app.add_middleware(
     CORSMiddleware,
