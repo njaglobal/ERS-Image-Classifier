@@ -14,3 +14,4 @@ services:
         sync: false
       - key: SUPABASE_MODEL_BUCKET
         sync: false
+    healthCheckPath: /docs 

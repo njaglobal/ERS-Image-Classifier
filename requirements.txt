@@ -1,16 +1,22 @@
+# Core ML / AI libraries
+tensorflow
+torch
+transformers
+
+# Image processing
+Pillow
+opencv-python-headless
+exif
+numpy
+
+# Web framework
 fastapi
 uvicorn[standard]
 python-multipart
-pillow
-numpy
-tensorflow
 python-dotenv
-requests
-scikit-learn
-exif
-opencv-python-headless
+
+# Supabase client
 supabase
-matplotlib
-transformers
-torch
-torchvision
+
+# Misc utilities
+requests

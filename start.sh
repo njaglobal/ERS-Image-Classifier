@@ -6,8 +6,11 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# Sync model files from Supabase (optional, won’t crash if fails)
+# Default PORT to 10000 if not provided by Render
+PORT="${PORT:-10000}"
+
+# Optional: Sync model files from Supabase (won’t crash if fails)
 # python supabase_utils.py || true
 
-# Start FastAPI app with uvicorn (production mode, no reload)
-exec uvicorn main:app --host 0.0.0.0 --port 10000
+# Start FastAPI app with uvicorn (production mode)
+exec uvicorn main:app --host 0.0.0.0 --port $PORT

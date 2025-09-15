@@ -12,7 +12,15 @@ ENV/
 env/
 env.bak/
 
+# ----------------
+# Environment variables
+# ----------------
+.env
+*.env
+
+# ----------------
 # Jupyter Notebook checkpoints
+# ----------------
 .ipynb_checkpoints/
 
 # ----------------
@@ -30,23 +38,23 @@ env.bak/
 *.ckpt.*
 checkpoint
 
-# TensorBoard
+# TensorBoard logs
 logs/
 logs/*
 
-# ----------------
 # Models (large files)
-# ----------------
-# Prevent committing trained models
 *.h5
 *.hdf5
 *.tflite
 *.pb
 *.onnx
 
-# Local models directory
-models/
+# PyTorch models
+*.pt
+*.pth
 
+# Local models directory (if you use one)
+models/
 
 # ----------------
 # Data
@@ -59,6 +67,12 @@ datasets/
 *.parquet
 *.zip
 *.tar.gz
+
+# ----------------
+# Supabase / downloaded model files
+# ----------------
+_downloaded_*
+*.db
 
 # ----------------
 # OS / IDE files
@@ -102,3 +116,8 @@ htmlcov/
 .cache
 .pytest_cache/
 cover/
+
+# ----------------
+# Render / deployment artifacts
+# ----------------
+render.yaml.lock
