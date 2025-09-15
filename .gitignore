@@ -54,7 +54,7 @@ logs/*
 *.pth
 
 # Local models directory (if you use one)
-models/
+/models
 
 # ----------------
 # Data

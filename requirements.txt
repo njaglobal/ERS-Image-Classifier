@@ -1,22 +1,5 @@
 # Core ML / AI libraries
-tensorflow-cpu==2.20.0
+tensorflow
 torch==2.8.0
 transformers
 
-# Image processing
-Pillow
-opencv-python-headless
-exif
-numpy
-
-# Web framework
-fastapi
-uvicorn[standard]
-python-multipart
-python-dotenv
-
-# Supabase client
-supabase
-
-# Misc utilities
-requests
