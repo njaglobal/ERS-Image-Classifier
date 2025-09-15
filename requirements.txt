@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pillow
+numpy
+tensorflow
+python-dotenv
+requests
+scikit-learn
+exif
+opencv-python-headless
+supabase
+matplotlib
+transformers
+torch
+torchvision
