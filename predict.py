@@ -5,50 +5,69 @@ import io
 import cv2
 from exif import Image as ExifImage
 import os
+from supabase_utils import sync_model_files
+from model_loader import get_model, reset_model
+from captioning import generate_caption
 
-# Hugging Face
-from transformers import BlipProcessor, BlipForConditionalGeneration
-import torch
 
 # Paths
 MODEL_PATH = "models/final_model_latest.tflite"
 LABELS_PATH = "models/labels_full.txt"
 IMG_SIZE = (224, 224)
 
-# ---- Load TFLite ResNet50 model ----
-def load_model_and_labels():
-    if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
-    if not os.path.exists(LABELS_PATH):
-        raise FileNotFoundError(f"Labels file not found: {LABELS_PATH}")
-    
-    with open(LABELS_PATH, "r") as f:
-        class_labels = [line.strip() for line in f.readlines()]
-    
-    interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
-    interpreter.allocate_tensors()
-    input_details = interpreter.get_input_details()
-    output_details = interpreter.get_output_details()
-    
-    return interpreter, input_details, output_details, class_labels
 
-try:
-    interpreter, input_details, output_details, class_labels = load_model_and_labels()
-    print(f"✅ ResNet50-based model loaded successfully")
-    print(f"📋 Available classes: {class_labels}")
-except Exception as e:
-    print(f"❌ Error loading model: {e}")
-    interpreter = input_details = output_details = class_labels = None
+_last_synced_mtime = None  # track local model file changes
+
+
+# ---- Load TFLite ResNet50 model ----
+# def load_model_and_labels():
+#     if not os.path.exists(MODEL_PATH):
+#         raise FileNotFoundError(f"Model file not found: {MODEL_PATH}")
+#     if not os.path.exists(LABELS_PATH):
+#         raise FileNotFoundError(f"Labels file not found: {LABELS_PATH}")
+    
+#     with open(LABELS_PATH, "r") as f:
+#         class_labels = [line.strip() for line in f.readlines()]
+    
+#     interpreter = tf.lite.Interpreter(model_path=MODEL_PATH)
+#     interpreter.allocate_tensors()
+#     input_details = interpreter.get_input_details()
+#     output_details = interpreter.get_output_details()
+    
+#     return interpreter, input_details, output_details, class_labels
+
+# try:
+#     interpreter, input_details, output_details, class_labels = load_model_and_labels()
+#     print(f"✅ ResNet50-based model loaded successfully")
+#     print(f"📋 Available classes: {class_labels}")
+# except Exception as e:
+#     print(f"❌ Error loading model: {e}")
+#     interpreter = input_details = output_details = class_labels = None
 
 # ---- Load Hugging Face BLIP model ----
-try:
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-    blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
-    print("✅ BLIP captioning model loaded")
-except Exception as e:
-    print(f"❌ Error loading BLIP model: {e}")
-    blip_processor = blip_model = None
+# try:
+#     device = "cuda" if torch.cuda.is_available() else "cpu"
+#     blip_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+#     blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base").to(device)
+#     print("✅ BLIP captioning model loaded")
+# except Exception as e:
+#     print(f"❌ Error loading BLIP model: {e}")
+#     blip_processor = blip_model = None
+
+
+
+# ---- Ensure model is fresh ----
+def ensure_latest_model():
+    global _last_synced_mtime
+    sync_model_files()  # pull from Supabase if newer
+
+    if os.path.exists(MODEL_PATH):
+        mtime = os.path.getmtime(MODEL_PATH)
+        if _last_synced_mtime is None or mtime != _last_synced_mtime:
+            reset_model()
+            _last_synced_mtime = mtime
+
+
 
 # ---- Preprocess ----
 def preprocess(image_bytes: bytes) -> np.ndarray:
@@ -56,6 +75,8 @@ def preprocess(image_bytes: bytes) -> np.ndarray:
     img = img.resize(IMG_SIZE)
     img = np.array(img, dtype=np.float32) / 255.0
     return np.expand_dims(img, axis=0)
+
+
 
 # ---- Fake photo detection ----
 def is_likely_fake_photo(image_bytes: bytes) -> bool:
@@ -86,25 +107,32 @@ def is_ambiguous(output: np.ndarray, threshold: float = 0.15) -> bool:
     sorted_probs = np.sort(output[0])
     return (sorted_probs[-1] - sorted_probs[-2]) < threshold
 
-# ---- BLIP caption generation ----
-def generate_caption(image_bytes: bytes) -> str:
-    if blip_model is None:
-        return "No caption available"
-    try:
-        pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        inputs = blip_processor(pil_img, return_tensors="pt").to(device)
-        out = blip_model.generate(**inputs, max_length=50)
-        caption = blip_processor.decode(out[0], skip_special_tokens=True)
-        caption = caption.strip()
-        if caption:
-            caption = caption[0].upper() + caption[1:]
 
-        return caption
-    except Exception as e:
-        return f"Captioning failed: {e}"
+
+# # ---- BLIP caption generation ----
+# def generate_caption(image_bytes: bytes) -> str:
+#     if blip_model is None:
+#         return "No caption available"
+#     try:
+#         pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+#         inputs = blip_processor(pil_img, return_tensors="pt").to(device)
+#         out = blip_model.generate(**inputs, max_length=50)
+#         caption = blip_processor.decode(out[0], skip_special_tokens=True)
+#         caption = caption.strip()
+#         if caption:
+#             caption = caption[0].upper() + caption[1:]
+
+#         return caption
+#     except Exception as e:
+#         return f"Captioning failed: {e}"
+
+
 
 # ---- Final classification + caption fusion ----
 def classify_and_describe(image_bytes: bytes) -> dict:
+    ensure_latest_model()
+    interpreter, input_details, output_details, class_labels = get_model()
+
     if interpreter is None:
         return {"error": "Model not loaded"}
 

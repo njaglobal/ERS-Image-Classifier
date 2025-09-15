@@ -19,7 +19,6 @@ def root():
 
 @app.post("/predict")
 async def predict_endpoint(file: UploadFile = File(...)):
-    sync_model_files()
     contents = await file.read()
     result = classify_and_describe(contents)
     return result  # 🔥 Return the full dict directly
