@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
     # Shutdown code (optional)
     # e.g., clean up resources
 
-app = FastAPI(title="ERS Image Classifier")
+app = FastAPI(title="ERS Image Classifier", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
