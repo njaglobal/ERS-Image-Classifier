@@ -95,6 +95,10 @@ def generate_caption(image_bytes: bytes) -> str:
         inputs = blip_processor(pil_img, return_tensors="pt").to(device)
         out = blip_model.generate(**inputs, max_length=50)
         caption = blip_processor.decode(out[0], skip_special_tokens=True)
+        caption = caption.strip()
+        if caption:
+            caption = caption[0].upper() + caption[1:]
+
         return caption
     except Exception as e:
         return f"Captioning failed: {e}"
@@ -125,21 +129,21 @@ def classify_and_describe(image_bytes: bytes) -> dict:
             "status": "invalid",
             "action": "reject",
             "reason": "No visible incident",
-            "caption": caption
+            "caption": f"{caption}. No visible incident"
         }
     if is_likely_fake_photo(image_bytes):
-        return {"label": label, "status": "invalid", "reason": "Likely fake photo", "caption": caption}
+        return {"label": label, "action": "reject", "status": "invalid", "reason": "Likely fake photo", "caption": f"{caption}. This is likely a Fake Photo."}
     if is_ambiguous(output):
-        return {"label": "none-accident", "status": "invalid", "reason": "Ambiguous", "caption": caption}
+        return {"label": "none-accident", "action": "uncertain", "status": "invalid", "reason": "Ambiguous", "caption": f"{caption}. This need human intervention."}
     if confidence < 0.75:
-        return {"label": label, "status": "invalid", "reason": "Low confidence", "caption": caption}
+        return {"label": label, "action": "uncertain", "status": "invalid", "reason": "Low confidence Level, Needs Human review", "caption": f"{caption}. This need human intervention."}
 
     # 4. Merge intelligently
     merged_desc = caption
     if label == "fire":
-        merged_desc += " This appears to involve a fire incident."
+        merged_desc += ". This appears to be a valid fire incident."
     elif label == "road":
-        merged_desc += " This seems to be a road accident or collision."
+        merged_desc += ". This seems to be a valid road accident or collision."
 
     return {
         "label": label,
