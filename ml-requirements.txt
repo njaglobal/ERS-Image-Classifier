@@ -1,4 +1,5 @@
 # Image processing
+tensorflow
 Pillow
 opencv-python-headless
 exif

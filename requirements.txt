@@ -1,5 +1,4 @@
 # Core ML / AI libraries
-tensorflow
 torch==2.8.0
 transformers
 
